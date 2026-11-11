@@ -1,5 +1,10 @@
 # Deployment, API Routing & Lifecycle Management of Autonomous LLM Agent on Cloud VPS
 
+[![Linux](https://img.shields.io/badge/OS-Ubuntu%2024.04%20LTS-E95420?logo=ubuntu&logoColor=white)](https://ubuntu.com/)
+[![Kernel](https://img.shields.io/badge/Kernel-Linux%206.8.0-blue?logo=linux&logoColor=white)]()
+[![Hardware](https://img.shields.io/badge/Hardware-2%20vCPU%20%7C%204GB%20RAM%20%7C%2060GB%20SSD-informational)]()
+[![Proxy](https://img.shields.io/badge/Proxy-9Router%20Port%2020128-success)]()
+
 Dokumentasi arsitektur, konfigurasi perutean multi-penyedia API (*Multi-Provider Routing*), dan pemantauan sistem produksi untuk **Autonomous Agent (Hermes Agent)** yang di-deploy pada server **Ubuntu VPS (Tencent Cloud - 2 vCPU, 4GB RAM, 60GB SSD)**.
 
 Sistem ini beroperasi 24/7 sebagai asisten operasional cerdas dengan integrasi langsung ke antarmuka bot Telegram, gateway proxy model lokal (**9Router**), API basis data literatur akademik (Semantic Scholar & OpenAlex), serta basis memori lokal terstruktur.
