@@ -1,0 +1,68 @@
+# ==============================================================================
+# Production Configuration Template for Autonomous LLM Agent on Ubuntu VPS
+# (All API keys and credentials redacted for open-source distribution)
+# ==============================================================================
+
+_config_version: 52
+
+# Database & Storage
+database:
+  journal_mode: wal
+
+attachments:
+  storage: local
+
+# Model Gateway & API Routing (via Local 9Router Proxy)
+model:
+  default: "Omop/deepseek-v4.1-flash-UNSENSORED"
+  provider: "custom"
+  base_url: "http://127.0.0.1:20128/v1"
+  api_key: "${OPENROUTER_ROUTER_API_KEY}"
+
+# Agent Execution Runtime & Limits
+agent:
+  max_turns: 40
+  verbose: false
+  reasoning_effort: high
+  service_tier: fast
+
+runtime:
+  nofile_soft_limit: 65536
+
+# Memory & Persistent Context Management
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+  memory_char_limit: 1375
+  user_char_limit: 1375
+  prefetch_spill_enabled: true
+
+# Context Compaction & Token Economy
+compression:
+  enabled: true
+  threshold: 0.85
+  target_ratio: 0.5
+  protect_first_n: 2
+  protect_last_n: 4
+
+# Gateway & Platform Integrations
+gateway:
+  platform_connect_timeout: 60
+  delivery_ledger: true
+  loop_watchdog: true
+  allow_all_users: false
+
+# Terminal Execution Sandbox
+terminal:
+  backend: "local"
+  cwd: "/home/ubuntu"
+  timeout: 180
+
+# Speech-to-Text (STT) Subsystem
+stt:
+  enabled: true
+  language: "id"
+  local:
+    model: "base"
+  openai:
+    model: "whisper-1"

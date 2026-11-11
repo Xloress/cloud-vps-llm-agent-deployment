@@ -1,50 +1,89 @@
 # Deployment, API Routing & Lifecycle Management of Autonomous LLM Agent on Cloud VPS
 
-Dokumentasi arsitektur, manajemen siklus hidup sistem, dan perutean API multi-model untuk implementasi **Autonomous Agent (Hermes Agent)** pada server **Ubuntu VPS (Tencent Cloud - 2 vCPU, 4GB RAM, 60GB SSD)**.
+Dokumentasi arsitektur, konfigurasi perutean multi-penyedia API (*Multi-Provider Routing*), dan pemantauan sistem produksi untuk **Autonomous Agent (Hermes Agent)** yang di-deploy pada server **Ubuntu VPS (Tencent Cloud - 2 vCPU, 4GB RAM, 60GB SSD)**.
 
-Sistem ini beroperasi 24/7 sebagai asisten operasional cerdas yang terhubung langsung ke antarmuka komunikasi bot Telegram, penyedia model bahasa (LLM), API pencarian basis data akademik (Semantic Scholar & OpenAlex), serta basis memori lokal terstruktur.
+Sistem ini beroperasi 24/7 sebagai asisten operasional cerdas dengan integrasi langsung ke antarmuka bot Telegram, gateway proxy model lokal (**9Router**), API basis data literatur akademik (Semantic Scholar & OpenAlex), serta basis memori lokal terstruktur.
 
 ---
 
-## 🏛️ Arsitektur Sistem
+## 🏛️ Arsitektur Infrastruktur Sistem
 
 ```text
-┌─────────────────┐       HTTPS / Webhook       ┌────────────────────────────────┐
-│ Telegram Client │ ──────────────────────────> │ Hermes Gateway & Daemon (VPS)  │
-└─────────────────┘                             └────────────────────────────────┘
-                                                                │
-                                      ┌─────────────────────────┴─────────────────────────┐
-                                      ▼                                                   ▼
-                       ┌──────────────────────────────┐                    ┌──────────────────────────────┐
-                       │ Multi-Model API Routing      │                    │ Local Toolset & Execution    │
-                       │ (Custom Providers & LLMs)    │                    │ (Python Kernel, Linux Shell, │
-                       │ • Context Compaction         │                    │  OCR, SQLite/Memory Layers)  │
-                       └──────────────────────────────┘                    └──────────────────────────────┘
+                                  ┌──────────────────────────────┐
+                                  │      Klien Pengguna          │
+                                  │   (Aplikasi Telegram / HP)   │
+                                  └──────────────┬───────────────┘
+                                                 │ TLS / HTTPS Webhook
+                                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ UBUNTU CLOUD VPS SERVER (2 vCPU, 4GB RAM, 60GB SSD)                                             │
+│                                                                                                 │
+│  ┌────────────────────────────────────────────────────────┐                                     │
+│  │  Hermes Agent Gateway & Process Daemon                 │                                     │
+│  │  • Session State & Event Loop                          │                                     │
+│  │  • Context Compaction Engine (Threshold: 85%)          │                                     │
+│  │  • Dual-tier Persistent Memory (USER.md / MEMORY.md)   │                                     │
+│  └───────────────────────────┬────────────────────────────┘                                     │
+│                              │ HTTP Localhost Routing                                           │
+│                              ▼                                                                  │
+│  ┌────────────────────────────────────────────────────────┐                                     │
+│  │  9Router Local Unified Proxy Gateway (Port: 20128)     │                                     │
+│  │  • Multi-Provider Endpoint Abstraction                 │                                     │
+│  │  • Dynamic Model Failover & Rate-Limit Handling        │                                     │
+│  │  • Centralized Catalog Sync (>5.000 Model Terdaftar)   │                                     │
+│  └──────────────┬────────────────────────────┬────────────┘                                     │
+│                 │                            │                                                  │
+└─────────────────┼────────────────────────────┼──────────────────────────────────────────────────┘
+                  │ HTTPS Outbound             │ HTTPS Outbound
+                  ▼                            ▼
+   ┌──────────────────────────────┐    ┌──────────────────────────────┐
+   │ AI Model Provider Endpoints  │    │ Academic Research APIs       │
+   │ (OpenAI, Gemini, Groq,       │    │ • OpenAlex API               │
+   │  Cerebras, OMOP/DeepSeek)    │    │ • Semantic Scholar API       │
+   └──────────────────────────────┘    └──────────────────────────────┘
 ```
 
 ---
 
-## ⚙️ Karakteristik & Spesifikasi Deployment
+## ⚙️ Spesifikasi & Karakteristik Teknis VPS
 
-* **Infrastruktur Server:** Ubuntu 24.04 LTS (Kernel Linux 6.8), 2 vCPU, 4 GB RAM, 60 GB NVMe SSD.
-* **Protokol Komunikasi:** Telegram Bot API via TLS terenkripsi dengan penanganan sesi pesan mandiri.
-* **Manajemen Sumber Daya (Resource Constraints):**
-  * Optimasi footprint memori (< 1.5 GB RAM terpakai saat beban normal).
-  * Mekanisme *Context Compaction* otomatis untuk mencegah degradasi jendela konteks percakapan panjang.
-  * Proteksi eksekusi latar belakang (*safe sub-process monitoring*).
-* **Integrasi Alat Eksternal (Extensible Toolsets):**
-  * Pencarian literatur peer-reviewed secara programmatic (OpenAlex / Semantic Scholar API).
-  * Ekstraksi dokumen multi-format (PDF, DOCX, XLSX, Jupyter Notebook `.ipynb`).
-  * Mesin OCR lokal (*Tesseract & Poppler*) untuk membaca naskah cetak dan lembar ujian tanpa ketergantungan cloud visi berbayar.
+* **Spesifikasi Server:** Ubuntu 24.04 LTS (Kernel Linux 6.8), 2 vCPU x86_64, 4 GB RAM, 60 GB NVMe SSD.
+* **Alokasi Sumber Daya (*Resource Budget*):**
+  * Penggunaan RAM operasional normal: $\approx 1,2\text{ GB} - 1,5\text{ GB}$ (sisa memori bebas $\approx 2,4\text{ GB}$).
+  * Kapasitas penyimpanan terpakai: $\approx 15\text{ GB}$ ($26\%$ dari total kuota SSD 60 GB).
+* **Komponen Gateway:**
+  1. **9Router Local Daemon (`/usr/lib/node_modules/9router`):**
+     * Berjalan sebagai proses *background* lokal pada port `127.0.0.1:20128`.
+     * Menyediakan antarmuka tunggal berstandar OpenAI `/v1/chat/completions` dengan kemampuan pengalihan rute dinamis (*intelligent routing*) antar penyedia API.
+  2. **Hermes Core Gateway:**
+     * Menjalankan daemon sesi interaktif terisolasi, sandboxing eksekusi terminal lokal, dan perlindungan loop perintah (*tool loop guardrails*).
 
 ---
 
 ## 📂 Struktur Repositori
 
 ```text
-├── scripts/
-│   └── system_health_check.sh       # Skrip pemantauan kesehatan CPU, RAM, & Disk server
 ├── configs/
-│   └── architecture_spec.md         # Catatan spesifikasi modul & lifecycle hooks
+│   ├── config_template.yaml         # Template konfigurasi produksi Hermes Agent (sanitized)
+│   └── 9router_spec.md              # Spesifikasi teknis & perutean gateway 9Router
+├── scripts/
+│   └── system_health_check.sh       # Skrip diagnostik otomatis kesehatan VPS & Daemon
 └── README.md
+```
+
+---
+
+## 🛠️ Diagnostik & Pemantauan Sistem
+
+Repositori ini menyertakan skrip audit kesehatan server otomatis di `scripts/system_health_check.sh` yang memeriksa 6 parameter operasional:
+1. Versi sistem operasi dan rilis kernel Linux.
+2. Beban rata-rata CPU (*load average*) dan durasi *uptime*.
+3. Pemanfaatan memori RAM dan ruang swap.
+4. Utilisasi partisi penyimpanan SSD NVMe.
+5. Status keaktifan proses daemon `9router` dan `hermes gateway`.
+6. Pemindaian konektivitas soket jaringan lokal pada port `20128`.
+
+Cara menjalankan diagnostik mandiri:
+```bash
+bash scripts/system_health_check.sh
 ```
