@@ -56,6 +56,79 @@ Salah satu keunggulan arsitektur ini adalah **pemisahan antara server eksekusi d
 
 ---
 
+## 💰 Analisis Biaya Token Model AI, Daftar Penyedia & Simulasi Pengeluaran Bulanan
+
+Salah satu pertimbangan krusial bagi pemula maupun pengembang adalah **berapa biaya token API yang harus dikeluarkan setiap bulan untuk mengoperasikan AI Agent ini secara aktif?**
+
+Melalui gateway proxy **9Router**, sistem ini dapat terhubung ke berbagai penyedia model terkemuka di dunia (*multi-provider*). Berikut adalah rincian harga pasar resmi per 1 juta token (1M tokens) dan simulasi perhitungan biaya operasional per bulannya.
+
+---
+
+### 1. Tabel Perbandingan Harga Model Populer (Tarif per 1 Juta Token)
+
+> *Catatan: 1 Juta Token setara dengan sekitar 750.000 kata (setara dengan membaca atau menulis ~1.500 halaman naskah).*
+
+| Nama Model AI | Penyedia Resmi / Provider | Harga Input (per 1M Token) | Harga Output (per 1M Token) | Keunggulan & Kasus Penggunaan Utama |
+|:---|:---|:---:|:---:|:---|
+| **DeepSeek V3 / V4 Flash** *(Model Utama Repo Ini)* | DeepSeek Official / OMOP | **$0.14** (~Rp 2.200) | **$0.28** (~Rp 4.400) | **Super Ekonomis & Cepat:** Sangat cerdas dalam coding, tool-calling terminal, dan jendela konteks luas. |
+| **Google Gemini 1.5 Flash** | Google Cloud / AI Studio | **$0.075** (~Rp 1.200) | **$0.30** (~Rp 4.700) | **Latensi Terendah & Multimodal:** Ideal untuk pemrosesan teks cepat dan ekstraksi berkas besar. |
+| **Meta Llama 3.3 70B** | Groq / Cerebras / Together | **$0.59** (~Rp 9.400) | **$0.79** (~Rp 12.600) | **Kecepatan Ekstrem (Inference Engine LPUs):** Respon nyaris seketika (*instant streaming*). |
+| **OpenAI GPT-4o Mini** | OpenAI Official | **$0.15** (~Rp 2.400) | **$0.60** (~Rp 9.600) | **Standar Industri Berimbang:** Sangat konsisten dalam format output JSON/YAML. |
+| **OpenAI GPT-4o (Omni Flagship)** | OpenAI Official | **$2.50** (~Rp 40.000) | **$10.00** (~Rp 160.000) | **Reasoning Kelas Berat:** Untuk pemecahan soal logika rumit dan perancangan paper ilmiah kompleks. |
+| **Anthropic Claude 3.5 Sonnet** | Anthropic / AWS Bedrock | **$3.00** (~Rp 48.000) | **$15.00** (~Rp 240.000) | **Kualitas Bahasa & Coding Tertinggi:** Standar tertinggi industri untuk arsitektur software. |
+
+---
+
+### 2. Simulasi Perhitungan Biaya Bulanan (Estimasi Nyata Pemakaian Aktif)
+
+Misalkan sistem beroperasi setiap hari untuk melayani tugas kuliah, penulisan script, diskusi teknis, dan manajemen server Telegram:
+
+#### Skenario Beban Pemakaian Harian (Intensive Student / Developer Usage):
+* **Rata-rata Percakapan Harian:** 30 kali interaksi intensif per hari (chat tanya jawab + eksekusi tool terminal/script).
+* **Konsumsi Token Harian:**
+  * Token Masukan (*Input Prompt + Context Memory*): $\approx 400.000\text{ token / hari}$.
+  * Token Keluaran (*Output Response & Code Generation*): $\approx 50.000\text{ token / hari}$.
+* **Akumulasi Konsumsi per Bulan (30 Hari):**
+  * Total Input: $400.000 \times 30 = \mathbf{12\text{ Juta Token Input / bulan}}$.
+  * Total Output: $50.000 \times 30 = \mathbf{1,5\text{ Juta Token Output / bulan}}$.
+
+---
+
+### 3. Rekapitulasi Total Biaya Bulanan (Sewa VPS + Token Model AI)
+
+#### Pilihan A: Menggunakan DeepSeek V4/V3 Flash *(Konfigurasi Standar Rekomendasi)*
+1. **Biaya Token AI (DeepSeek Flash):**
+   * Biaya Input: $12\text{ M} \times \$0.14 = \$1.68$
+   * Biaya Output: $1.5\text{ M} \times \$0.28 = \$0.42$
+   * **Subtotal Token:** $\$2.10\text{ USD}$ (atau **$\approx \text{Rp } 33.600 / \text{bulan}$**).
+2. **Biaya Server VPS (Tencent Cloud / Hetzner 2 vCPU 4GB):**
+   * **Subtotal VPS:** $\approx \text{Rp } 85.000 / \text{bulan}$.
+3. **TOTAL PENGELUARAN BULANAN (Pilihan A):**
+   $$\text{Total} = \text{Rp } 85.000 + \text{Rp } 33.600 = \mathbf{\approx \text{Rp } 118.600\text{ / bulan}}$$
+   *(Dengan biaya sekitar Rp 118 ribu per bulan, Anda memiliki asisten AI cerdas berkapasitas tinggi yang melayani Anda 24 jam nonstop di Telegram).*
+
+#### Pilihan B: Menggunakan Model Premium Flagship (GPT-4o / Claude 3.5 Sonnet)
+1. **Biaya Token AI (GPT-4o Mini untuk tugas rutin + Claude 3.5 Sonnet untuk tugas berat):**
+   * Menggunakan strategi *hybrid routing*: 80% query ditangani model cepat dan 20% query diarahkan ke model flagship.
+   * **Subtotal Token:** $\approx \$8.50\text{ USD}$ (**$\approx \text{Rp } 136.000 / \text{bulan}$**).
+2. **Biaya Server VPS:** $\approx \text{Rp } 85.000 / \text{bulan}$.
+3. **TOTAL PENGELUARAN BULANAN (Pilihan B):**
+   $$\text{Total} = \text{Rp } 85.000 + \text{Rp } 136.000 = \mathbf{\approx \text{Rp } 221.000\text{ / bulan}}$$
+
+---
+
+### 4. Tips Efisiensi Anggaran bagi Pemula
+
+1. **Manfaatkan Fitur *Context Compaction* Hermes:**  
+   Aktifkan fitur kompresi riwayat sesi (`compression.enabled: true` dengan ambang `0.85`) agar token obrolan lama otomatis diringkas menjadi rangkuman padat. Ini menghemat hingga **40–50% biaya token input**.
+2. **Routing Model Berjenjang via 9Router:**  
+   Gunakan model gratis atau ultra-murah (seperti Gemini 1.5 Flash atau DeepSeek Flash) untuk tugas sehari-hari, dan alihkan ke model penalaran tinggi (*reasoning models*) hanya saat memecahkan kalkulasi teknik rumit.
+3. **Isolasi Memori Lokal:**  
+   Karena memori fakta disimpan dalam file lokal (`USER.md` dan `MEMORY.md`), Anda tidak perlu membayar biaya basis data vektor pihak ketiga (*Zero Vector DB SaaS Cost*).
+
+
+---
+
 ## 🏛️ Arsitektur Sistem
 
 ```text
