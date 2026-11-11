@@ -1,17 +1,62 @@
-# Deployment, API Routing & Lifecycle Management of Autonomous LLM Agent on Cloud VPS
+# Panduan Lengkap Deployment Autonomous AI Agent & Multi-Model Routing pada Cloud VPS
 
 [![Linux](https://img.shields.io/badge/OS-Ubuntu%2024.04%20LTS-E95420?logo=ubuntu&logoColor=white)](https://ubuntu.com/)
 [![Kernel](https://img.shields.io/badge/Kernel-Linux%206.8.0-blue?logo=linux&logoColor=white)]()
 [![Hardware](https://img.shields.io/badge/Hardware-2%20vCPU%20%7C%204GB%20RAM%20%7C%2060GB%20SSD-informational)]()
 [![Proxy](https://img.shields.io/badge/Proxy-9Router%20Port%2020128-success)]()
+[![Status](https://img.shields.io/badge/Status-Production%20Verified-brightgreen)]()
 
-Dokumentasi arsitektur, konfigurasi perutean multi-penyedia API (*Multi-Provider Routing*), dan pemantauan sistem produksi untuk **Autonomous Agent (Hermes Agent)** yang di-deploy pada server **Ubuntu VPS (Tencent Cloud - 2 vCPU, 4GB RAM, 60GB SSD)**.
+Repositori ini memuat **panduan komprehensif, arsitektur infrastruktur, analisis biaya (*cost efficiency*), serta tutorial instalasi *step-by-step* dari nol** untuk membangun dan menjalankan sistem **Autonomous LLM Agent (Hermes Agent)** pada server **Cloud VPS**.
 
-Sistem ini beroperasi 24/7 sebagai asisten operasional cerdas dengan integrasi langsung ke antarmuka bot Telegram, gateway proxy model lokal (**9Router**), API basis data literatur akademik (Semantic Scholar & OpenAlex), serta basis memori lokal terstruktur.
+Sistem ini didesain agar dapat melayani asisten cerdas pribadi yang aktif 24/7 melalui bot Telegram, terintegrasi dengan gateway proxy perutean multi-model lokal (**9Router**), memiliki basis data memori persisten di SSD lokal, serta mampu mengakses alat eksternal (ekstraksi berkas dokumen, mesin OCR lokal, dan pencarian basis data jurnal ilmiah).
 
 ---
 
-## 🏛️ Arsitektur Infrastruktur Sistem
+## 💡 Mengapa Menggunakan Cloud VPS Dibandingkan Laptop Pribadi?
+
+Banyak pemula yang ragu apakah sebaiknya menjalankan agent AI di laptop pribadi atau menyewa server Cloud VPS. Berikut adalah analisis perbandingan teknis dan finansialnya:
+
+### 1. Tabel Perbandingan: Cloud VPS vs Laptop Lokal
+
+| Parameter Evaluasi | Menjalankan di Laptop Lokal | Menjalankan di Cloud VPS (Lighthouse / Hetzner) |
+|:---|:---|:---|
+| **Ketersediaan (*Uptime*)** | Terbatas (Agent mati jika laptop di-shutdown, sleep, atau dibawa bepergian) | **Aktif 24/7/365 Nonstop** di data center dengan jaminan uptime 99.9% |
+| **Konektivitas Jaringan** | Bergantung pada Wi-Fi/Hotspot (IP berubah-ubah, sering RTO) | **IP Publik Statis & Bandwidth Dedicated** (kecepatan unduh/unggah gigabit) |
+| **Beban & Masa Pakai Hardware** | Baterai cepat aus, suhu CPU/GPU panas jika daemon standby terus | **Beban komputasi dipindahkan ke server**, laptop tetap dingin dan awet |
+| **Konsumsi Daya Listrik** | Laptop menyedot listrik rumah 45W–150W non-stop 24 jam | **Nol tagihan listrik rumah tambahan** |
+| **Akses Multi-Device** | Bot Telegram hanya merespons jika laptop menyala | **Bisa diakses dari mana saja** (lewat HP Android/iOS, tablet, atau laptop) |
+
+### 2. Analisis Estimasi Biaya (*Cost Comparison*)
+
+Menyewa VPS hemat daya (seperti Tencent Cloud Lighthouse atau Hetzner Cloud) saat ini jauh lebih ekonomis dibandingkan depresiasi baterai laptop:
+
+* **Biaya VPS 2 vCPU / 4 GB RAM / 60 GB SSD:**
+  * Biaya sewa: Sekitar **Rp 65.000 – Rp 120.000 / bulan** (atau ~$4 – $8 USD/bulan).
+  * Kuota lalu lintas data: Rata-rata 1.000 GB – 1.500 GB / bulan (sangat berlebih untuk kebutuhan teks dan bot).
+* **Biaya Listrik & Baterai Laptop Standby 24 Jam:**
+  * Konsumsi daya rata-rata laptop gaming/kerja (standby + daemon): $\approx 45\text{ Watt} \times 24\text{ jam} \times 30\text{ hari} \approx 32,4\text{ kWh}$.
+  * Biaya listrik PLN (tarif R-1/1300VA): $\approx \text{Rp } 47.000 / \text{bulan}$.
+  * Risiko penggantian baterai laptop yang drop akibat dicolok terus menerus: $\approx \text{Rp } 600.000 – \text{Rp } 1.200.000$.
+* **Kesimpulan:** Dengan menyewa VPS, Anda mendapatkan keandalan server kelas industri 24 jam dengan selisih biaya yang sangat kecil dan efisien.
+
+---
+
+## 🧠 Model Kecerdasan Buatan (LLM) yang Digunakan
+
+Salah satu keunggulan arsitektur ini adalah **pemisahan antara server eksekusi dan server inferensi model**. VPS bertindak sebagai *otak penggerak (runtime agent)*, sedangkan beban inferensi dialihkan ke endpoint perutean cerdas melalui **9Router** pada port `127.0.0.1:20128`.
+
+### 1. Karakteristik Model Utama:
+* **DeepSeek V4 / V3 Flash (Uncensored / Fast Tier):**
+  * Model bahasa berkecepatan tinggi dengan efisiensi token luar biasa.
+  * Sangat responsif dalam mengeksekusi instruksi *tool-calling* (menjalankan perintah terminal, membaca file, menulis script, dan kalkulasi).
+  * Menawarkan jendela konteks (*context window*) yang luas dengan latensi *Time-to-First-Token* (TTFT) di bawah 1 detik.
+* **Integrasi Multi-Model (Failover Routing):**
+  * Berkat **9Router**, sistem terhubung ke katalog lebih dari 5.000 model AI dari puluhan penyedia (OpenAI, Google Gemini, Groq, Cerebras, Kimi, Minimax).
+  * Jika penyedia utama mengalami gangguan atau *rate limit*, 9Router secara cerdas mengalihkan permintaan ke model cadangan tanpa membuat bot mengalami *crash*.
+
+---
+
+## 🏛️ Arsitektur Sistem
 
 ```text
                                   ┌──────────────────────────────┐
@@ -50,18 +95,79 @@ Sistem ini beroperasi 24/7 sebagai asisten operasional cerdas dengan integrasi l
 
 ---
 
-## ⚙️ Spesifikasi & Karakteristik Teknis VPS
+## 📖 Tutorial Instalasi Lengkap dari Nol (Step-by-Step untuk Pemula)
 
-* **Spesifikasi Server:** Ubuntu 24.04 LTS (Kernel Linux 6.8), 2 vCPU x86_64, 4 GB RAM, 60 GB NVMe SSD.
-* **Alokasi Sumber Daya (*Resource Budget*):**
-  * Penggunaan RAM operasional normal: $\approx 1,2\text{ GB} - 1,5\text{ GB}$ (sisa memori bebas $\approx 2,4\text{ GB}$).
-  * Kapasitas penyimpanan terpakai: $\approx 15\text{ GB}$ ($26\%$ dari total kuota SSD 60 GB).
-* **Komponen Gateway:**
-  1. **9Router Local Daemon (`/usr/lib/node_modules/9router`):**
-     * Berjalan sebagai proses *background* lokal pada port `127.0.0.1:20128`.
-     * Menyediakan antarmuka tunggal berstandar OpenAI `/v1/chat/completions` dengan kemampuan pengalihan rute dinamis (*intelligent routing*) antar penyedia API.
-  2. **Hermes Core Gateway:**
-     * Menjalankan daemon sesi interaktif terisolasi, sandboxing eksekusi terminal lokal, dan perlindungan loop perintah (*tool loop guardrails*).
+Panduan berikut dirancang agar siapa saja dengan sistem operasi **Ubuntu 22.04 / 24.04 LTS** dapat menduplikasi sistem ini secara mandiri:
+
+### Langkah 1: Persiapan Server VPS & Update Paket
+Masuk ke terminal VPS Anda melalui SSH:
+```bash
+ssh ubuntu@IP_VPS_ANDA
+```
+Perbarui repositori sistem dan pasang dependensi esensial:
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl wget git build-essential python3 python3-pip python3-venv poppler-utils tesseract-ocr
+```
+
+### Langkah 2: Instalasi Node.js Lingkungan Gateway
+Gateway dan proxy perutean membutuhkan Node.js (direkomendasikan Node.js LTS v20 atau v22):
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+node -v   # Pastikan output v20.x.x
+```
+
+### Langkah 3: Instalasi & Konfigurasi 9Router Local Gateway
+Pasang paket 9Router secara global untuk menyatukan seluruh API model AI:
+```bash
+sudo npm install -g 9router
+
+# Jalankan 9Router pada port 20128 di latar belakang (background)
+nohup 9router -p 20128 --skip-update > ~/9router.log 2>&1 &
+```
+Periksa apakah 9Router sudah aktif berjalan:
+```bash
+ss -tuln | grep 20128
+# Jika muncul ':20128', gateway proxy telah aktif!
+```
+
+### Langkah 4: Setup Hermes Autonomous Agent
+Pasang dan inisialisasi lingkungan Hermes Agent di direktori home:
+```bash
+# Clone atau inisialisasi lingkungan Hermes
+mkdir -p ~/.hermes
+cd ~/.hermes
+
+# Unduh template konfigurasi dari repositori ini
+wget https://raw.githubusercontent.com/Xloress/cloud-vps-llm-agent-deployment/main/configs/config_template.yaml -O ~/.hermes/config.yaml
+```
+
+Edit file `~/.hermes/config.yaml` menggunakan editor teks (misal: `nano ~/.hermes/config.yaml`) dan masukkan API Key penyedia Anda pada bagian:
+```yaml
+model:
+  default: "Omop/deepseek-v4.1-flash-UNSENSORED"
+  provider: "custom"
+  base_url: "http://127.0.0.1:20128/v1"
+  api_key: "MASUKKAN_API_KEY_ANDA_DI_SINI"
+```
+
+### Langkah 5: Menghubungkan ke Bot Telegram
+Agar agent dapat diakses dari smartphone Anda:
+1. Buka Telegram dan hubungi `@BotFather` untuk membuat bot baru (`/newbot`).
+2. Dapatkan **HTTP API Bot Token** dari BotFather.
+3. Hubungkan token tersebut ke profil Hermes:
+```bash
+hermes platform connect telegram
+# Masukkan token bot Telegram Anda saat diminta
+```
+
+Jalankan gateway agent di latar belakang:
+```bash
+nohup hermes gateway run > ~/hermes_gateway.log 2>&1 &
+```
+
+Sekarang bot Telegram Anda sudah hidup 24/7 dan didukung oleh mesin Linux VPS!
 
 ---
 
@@ -78,17 +184,53 @@ Sistem ini beroperasi 24/7 sebagai asisten operasional cerdas dengan integrasi l
 
 ---
 
-## 🛠️ Diagnostik & Pemantauan Sistem
+## 🛠️ Pemantauan & Diagnostik Sistem
 
-Repositori ini menyertakan skrip audit kesehatan server otomatis di `scripts/system_health_check.sh` yang memeriksa 6 parameter operasional:
-1. Versi sistem operasi dan rilis kernel Linux.
-2. Beban rata-rata CPU (*load average*) dan durasi *uptime*.
-3. Pemanfaatan memori RAM dan ruang swap.
-4. Utilisasi partisi penyimpanan SSD NVMe.
-5. Status keaktifan proses daemon `9router` dan `hermes gateway`.
-6. Pemindaian konektivitas soket jaringan lokal pada port `20128`.
+Untuk memeriksa apakah seluruh sistem berjalan normal, repositori ini telah dilengkapi dengan skrip diagnostik otomatis `scripts/system_health_check.sh`.
 
-Cara menjalankan diagnostik mandiri:
+Jalankan perintah ini kapan saja untuk melihat kesehatan server Anda:
 ```bash
 bash scripts/system_health_check.sh
 ```
+
+### Contoh Hasil Audit Nyata Sistem:
+```text
+=================================================================
+   AUTONOMOUS AGENT & VPS CLOUD INFRASTRUCTURE HEALTH AUDIT      
+   Host: VM-0-12-ubuntu | Date: 2026-11-11 20:43:33 CST     
+=================================================================
+
+[1] Sistem Operasi & Kernel:
+Linux 6.8.0-138-generic x86_64 GNU/Linux
+Description:	Ubuntu 24.04.5 LTS
+
+[2] Beban Komputasi CPU & Uptime:
+ 20:43:33 up 4 days,  7:37,  0 user,  load average: 0.10, 0.11, 0.09
+
+[3] Pemanfaatan Memori RAM (Target: < 2.0 GB used):
+               total        used        free      shared  buff/cache   available
+Mem:           3.6Gi       1.1Gi       1.1Gi       1.8Mi       1.7Gi       2.5Gi
+Swap:          1.9Gi        48Mi       1.9Gi
+
+[4] Kapasitas Penyimpanan SSD NVMe (Target: < 50% usage):
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda2        59G   15G   42G  26% /
+
+[5] Pemeriksaan Status Proses Latar Belakang (Daemons):
+  [✓] 9Router Local Gateway : RUNNING (PID: 1448989, Port: 20128)
+  [✓] Hermes Agent Gateway  : RUNNING (PID: 1449022)
+
+[6] Pemeriksaan Konektivitas Soket Jaringan:
+  [✓] Soket Gateway 9Router (Port 20128) aktif merespons koneksi lokal.
+
+=================================================================
+ [✓] Diagnostik infrastruktur selesai dijalankan tanpa anomali.
+=================================================================
+```
+
+---
+
+## 🛡️ Keamanan & Perlindungan Privasi
+
+* **Sanitized Configurations:** Seluruh file repositori ini bebas dari kata sandi, token bot, maupun API key rahasia.
+* **Localhost Socket Binding:** Port 9Router (`20128`) terikat secara lokal (`127.0.0.1`), sehingga tidak dapat diakses atau disusupi dari jaringan publik internet tanpa melalui otentikasi SSH tunneling.
